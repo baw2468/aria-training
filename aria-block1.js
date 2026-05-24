@@ -9,6 +9,7 @@ async function dbSet(key,data){const str=JSON.stringify(data);try{await db.ref(U
 const C={bg:"#f0f4ff",bgDeep:"#e8eeff",bgCard:"rgba(255,255,255,0.82)",border:"rgba(99,102,241,0.14)",borderStrong:"rgba(99,102,241,0.3)",run:"#0ea5e9",longRun:"#6366f1",tempo:"#8b5cf6",strength:"#f59e0b",recovery:"#10b981",hr:"#ef4444",nutrition:"#06b6d4",warn:"#f97316",good:"#10b981",text:"#1e293b",textMid:"#64748b",textSoft:"#94a3b8"};
 const RUN_COLOR={run:"#0ea5e9",long_run:"#6366f1",tempo:"#8b5cf6",intervals:"#8b5cf6",recovery:"#10b981"};
 const runColor=(t)=>RUN_COLOR[t]||RUN_COLOR.run;
+function isRunActivity(type){var t=(type||"run").toLowerCase();return!t.includes("walk")&&!t.includes("hike")&&!t.includes("cycl")&&!t.includes("swim")&&!t.includes("row")&&!t.includes("yoga")&&!t.includes("weight");}
 const WKT_COLOR={A:"#f59e0b",B:"#f59e0b",C:"#f59e0b",D:"#f59e0b"};
 const WKT_LABEL={A:"Lower Body",B:"Upper Push",C:"Upper Pull + Core",D:"Plyometrics"};
 const WKT_DAY={A:"Monday",B:"Wednesday",C:"Friday",D:"Sunday PM"};
@@ -229,7 +230,7 @@ function analyze(week,plan,runs,strength,hr,nutrition){
   const W=(t,b,s)=>warnings.push({t,b,s});
   const P=(t,b)=>positives.push({t,b});
   const A=(p,t)=>actions.push({p,t});
-  const wkRuns=runs.filter(r=>r.week===week);
+  const wkRuns=runs.filter(r=>r.week===week&&isRunActivity(r.type));
   const wkMi=wkRuns.reduce((a,r)=>a+parseFloat(r.dist||0),0);
   const wkStr=strength.filter(s=>s.week===week);
   const l7hr=hr.slice(0,14);
@@ -242,7 +243,7 @@ function analyze(week,plan,runs,strength,hr,nutrition){
     if(pct>=90)P("Volume on track",`${wkMi.toFixed(1)} of ${plan.miles} planned miles (${Math.round(pct)}%). Executing the plan.`);
     else if(pct<50&&!plan.recovery)W("Volume behind",`${wkMi.toFixed(1)} of ${plan.miles} miles. ${(plan.miles-wkMi).toFixed(1)}mi remaining.`,"Don't double up — stick to plan.");
   }
-  wkRuns.filter(r=>r.type==="run"||r.type==="recovery").forEach(r=>{if(r.hrAvg&&+r.hrAvg>155)W("Easy run HR too high",`${r.date}: ${r.hrAvg}bpm on easy run.`,"Zone 2 ceiling is 143bpm. Slow down to build aerobic base.");});
+  wkRuns.filter(r=>!["tempo","intervals","long_run"].includes(r.type)).forEach(r=>{if(r.hrAvg&&+r.hrAvg>155)W("Easy run HR too high",`${r.date}: ${r.hrAvg}bpm on easy run.`,"Zone 2 ceiling is 143bpm. Slow down to build aerobic base.");});
   if(restHRs.length>=3){
     const r3=restHRs.slice(0,3).reduce((a,b)=>a+b,0)/3,o3=restHRs.slice(3,6).length?restHRs.slice(3,6).reduce((a,b)=>a+b,0)/restHRs.slice(3,6).length:r3;
     if(r3>o3+5){W("Resting HR elevated",`Up ~${Math.round(r3-o3)}bpm over the past week.`,"Check sleep and nutrition — may indicate incomplete recovery.");A(1,"Prioritize sleep and nutrition — resting HR elevated");}
@@ -280,7 +281,7 @@ function analyze(week,plan,runs,strength,hr,nutrition){
 // ─── HELPERS ─────────────────────────────────────────────────────
 const getWeek=()=>{try{const w=Math.floor((new Date()-PLAN_START)/(7*24*60*60*1000))+1;return Math.max(1,Math.min(23,w));}catch(e){return 1;}};
 const getDTR=()=>Math.max(0,Math.ceil((RACE_DATE-new Date())/(24*60*60*1000)));
-const toDay=()=>new Date().toISOString().split("T")[0];
+const toDay=()=>{const n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");};
 const greet=()=>{const h=new Date().getHours();return h<12?"morning":h<18?"afternoon":"evening";};
 const parseGarmin=t=>({
   dist:t.match(/(\d+\.?\d*)\s*mi(?!n)/i)?.[1]||null,
@@ -298,7 +299,8 @@ const parseCSV=text=>{
   return lines.slice(1).map(line=>{
     const vals=line.split(",").map(v=>v.trim().replace(/"/g,""));const row={};hdrs.forEach((h,j)=>row[h]=vals[j]||"");
     const dr=row["date"]||row["start time"]||row["activity date"]||"";const date=dr.split(" ")[0];if(!date)return null;
-    return{date,week:getWeek(),dist:(row["distance"]||"").replace(/[^\d.]/g,"")||null,pace:row["avg pace"]||null,time:row["time"]||row["elapsed time"]||null,hrAvg:row["avg hr"]||row["average heart rate (bpm)"]||null,hrMax:row["max hr"]||null,cal:row["calories"]||null,type:(row["activity type"]||"run").toLowerCase(),raw:"Garmin CSV",hrRec:null};
+    const aw=Math.floor((new Date(date+"T00:00:00")-PLAN_START)/(7*24*60*60*1000));const actWeek=(aw<0||aw>=161)?null:Math.max(1,Math.min(23,aw+1));
+    return{date,week:actWeek,dist:(row["distance"]||"").replace(/[^\d.]/g,"")||null,pace:row["avg pace"]||null,time:row["time"]||row["elapsed time"]||null,hrAvg:row["avg hr"]||row["average heart rate (bpm)"]||null,hrMax:row["max hr"]||null,cal:row["calories"]||null,type:(row["activity type"]||"run").toLowerCase(),raw:"Garmin CSV",hrRec:null};
   }).filter(Boolean);
 };
 function getPlannedForDate(date){

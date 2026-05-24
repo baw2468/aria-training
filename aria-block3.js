@@ -171,7 +171,7 @@ function App(){
   // Today/tomorrow plans
   var todayPlan=getPlannedForDate(today);
   var tmr=new Date();tmr.setDate(tmr.getDate()+1);
-  var tmrStr=tmr.toISOString().split("T")[0];
+  var tmrStr=tmr.getFullYear()+"-"+String(tmr.getMonth()+1).padStart(2,"0")+"-"+String(tmr.getDate()).padStart(2,"0");
   var tmrPlan=getPlannedForDate(tmrStr);
 
   // Calendar cells builder
@@ -183,7 +183,7 @@ function App(){
       var pl=getPlannedForDate(ds);
       var hasRun=!!(pl.plan&&pl.runLabel&&pl.runLabel!=="REST");
       var hasStr=!!(pl.plan&&pl.strWkt);
-      var lr=runs.find(function(r){return r.date===ds;})||null;
+      var lr=runs.find(function(r){return r.date===ds&&isRunActivity(r.type);})||null;
       var ls=strength.find(function(s){return s.date===ds;})||null;
       result.push({d:d2,dateStr:ds,hasRun:hasRun,hasStr:hasStr,loggedRun:lr,loggedStr:ls,planned:pl,isToday:ds===today});
     }
@@ -276,7 +276,7 @@ function App(){
                 e("div",{style:{fontSize:12,fontWeight:700,color:runColor(todayPlan.runType||"run"),marginBottom:2}},(todayPlan.runType||"run").replace("_"," ").toUpperCase()),
                 e("div",{style:{fontSize:13,fontWeight:600,color:C.text}},todayPlan.runLabel)
               ),
-              runs.find(function(r){return r.date===today;})?e("span",{style:{fontSize:10,fontWeight:700,color:C.good}},"✓ Done"):null
+              runs.find(function(r){return r.date===today&&isRunActivity(r.type);})?e("span",{style:{fontSize:10,fontWeight:700,color:C.good}},"✓ Done"):null
             ):null,
             todayPlan.strWkt?e("div",{style:{display:"flex",gap:10,alignItems:"center",padding:"10px 12px",background:WKT_COLOR[todayPlan.strWkt]+"08",border:"1px solid "+WKT_COLOR[todayPlan.strWkt]+"22",borderRadius:10}},
               e("div",{style:{width:36,height:36,borderRadius:10,background:WKT_COLOR[todayPlan.strWkt],display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}},"⬡"),
@@ -439,16 +439,17 @@ function App(){
 
         // Recent runs list
         runs.length>0?e("div",{style:cardS()},
-          e("div",{style:{fontSize:12,fontWeight:700,color:C.textSoft,letterSpacing:1.5,textTransform:"uppercase",marginBottom:12}},"Recent Runs · "+runs.length+" total"),
+          (function(){var runCt=runs.filter(function(r){return isRunActivity(r.type);}).length;var otherCt=runs.length-runCt;return e("div",{style:{fontSize:12,fontWeight:700,color:C.textSoft,letterSpacing:1.5,textTransform:"uppercase",marginBottom:12}},"Recent Activities · "+runCt+" run"+(runCt!==1?"s":"")+(otherCt>0?" + "+otherCt+" other":""));}()),
           runs.slice(0,8).map(function(r,i){
+            var isRun=isRunActivity(r.type);var actColor=isRun?runColor(r.type):C.textSoft;
             return e("div",{key:i,style:{display:"flex",gap:10,padding:"9px 0",borderBottom:i<7?"1px solid "+C.border:"none",alignItems:"flex-start"}},
-              e("div",{style:{width:6,borderRadius:3,background:runColor(r.type),alignSelf:"stretch",flexShrink:0,minHeight:36}}),
+              e("div",{style:{width:6,borderRadius:3,background:actColor,alignSelf:"stretch",flexShrink:0,minHeight:36}}),
               e("div",{style:{flex:1}},
                 e("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
                   e("span",{style:{fontSize:13,fontWeight:600,color:C.text}},r.date),
                   e("div",{style:{display:"flex",gap:5}},
-                    e(Tag,{color:runColor(r.type)},r.type),
-                    e(Tag,{color:"#6366f1"},"Wk"+r.week)
+                    e(Tag,{color:actColor},r.type),
+                    r.week?e(Tag,{color:"#6366f1"},"Wk"+r.week):null
                   )
                 ),
                 e("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
