@@ -9,7 +9,8 @@ async function dbSet(key,data){const str=JSON.stringify(data);try{await db.ref(U
 const C={bg:"#f0f4ff",bgDeep:"#e8eeff",bgCard:"rgba(255,255,255,0.82)",border:"rgba(99,102,241,0.14)",borderStrong:"rgba(99,102,241,0.3)",run:"#0ea5e9",longRun:"#6366f1",tempo:"#8b5cf6",strength:"#f59e0b",recovery:"#10b981",hr:"#ef4444",nutrition:"#06b6d4",warn:"#f97316",good:"#10b981",text:"#1e293b",textMid:"#64748b",textSoft:"#94a3b8"};
 const RUN_COLOR={run:"#0ea5e9",long_run:"#6366f1",tempo:"#8b5cf6",intervals:"#8b5cf6",recovery:"#10b981"};
 const runColor=(t)=>RUN_COLOR[t]||RUN_COLOR.run;
-function isRunActivity(type){var t=(type||"run").toLowerCase();return!t.includes("walk")&&!t.includes("hike")&&!t.includes("cycl")&&!t.includes("swim")&&!t.includes("row")&&!t.includes("yoga")&&!t.includes("weight");}
+function isRunActivity(type){var t=(type||"run").toLowerCase();return t!=="walk"&&t!=="cross"&&!t.includes("hike")&&!t.includes("cycl")&&!t.includes("swim")&&!t.includes("row")&&!t.includes("yoga")&&!t.includes("weight");}
+function classifyGarminType(raw){var t=(raw||"").toLowerCase();if(t.includes("walk")||t.includes("hike"))return"walk";if(t.includes("long")||t.includes("trail"))return"long_run";if(t.includes("tempo")||t.includes("race")||t.includes("interval")||t.includes("track"))return"tempo";if(t.includes("recov")||t.includes("easy"))return"recovery";if(t.includes("run")||t.includes("jog"))return"run";if(t.includes("cycl")||t.includes("bike")||t.includes("swim")||t.includes("strength")||t.includes("gym")||t.includes("yoga")||t.includes("fitness"))return"cross";return"run";}
 const WKT_COLOR={A:"#f59e0b",B:"#f59e0b",C:"#f59e0b",D:"#f59e0b"};
 const WKT_LABEL={A:"Lower Body",B:"Upper Push",C:"Upper Pull + Core",D:"Plyometrics"};
 const WKT_DAY={A:"Monday",B:"Wednesday",C:"Friday",D:"Sunday PM"};
@@ -300,7 +301,7 @@ const parseCSV=text=>{
     const vals=line.split(",").map(v=>v.trim().replace(/"/g,""));const row={};hdrs.forEach((h,j)=>row[h]=vals[j]||"");
     const dr=row["date"]||row["start time"]||row["activity date"]||"";const date=dr.split(" ")[0];if(!date)return null;
     const aw=Math.floor((new Date(date+"T00:00:00")-PLAN_START)/(7*24*60*60*1000));const actWeek=(aw<0||aw>=161)?null:Math.max(1,Math.min(23,aw+1));
-    return{date,week:actWeek,dist:(row["distance"]||"").replace(/[^\d.]/g,"")||null,pace:row["avg pace"]||null,time:row["time"]||row["elapsed time"]||null,hrAvg:row["avg hr"]||row["average heart rate (bpm)"]||null,hrMax:row["max hr"]||null,cal:row["calories"]||null,type:(row["activity type"]||"run").toLowerCase(),raw:"Garmin CSV",hrRec:null};
+    return{date,week:actWeek,dist:(row["distance"]||"").replace(/[^\d.]/g,"")||null,pace:row["avg pace"]||null,time:row["time"]||row["elapsed time"]||null,hrAvg:row["avg hr"]||row["average heart rate (bpm)"]||null,hrMax:row["max hr"]||null,cal:row["calories"]||null,type:classifyGarminType(row["activity type"]||""),raw:"Garmin CSV",hrRec:null};
   }).filter(Boolean);
 };
 function getPlannedForDate(date){
