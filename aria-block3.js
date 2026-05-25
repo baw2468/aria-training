@@ -18,7 +18,7 @@ function App(){
   var _syncing=useState(false);var syncing=_syncing[0];var setSyncing=_syncing[1];
 
   // Log Run state
-  var _rDate=useState("");var rDate=_rDate[0];var setRDate=_rDate[1];
+  var _rDate=useState(toDay());var rDate=_rDate[0];var setRDate=_rDate[1];
   var _rType=useState("run");var rType=_rType[0];var setRType=_rType[1];
   var _rRaw=useState("");var rRaw=_rRaw[0];var setRRaw=_rRaw[1];
   var _rNotes=useState("");var rNotes=_rNotes[0];var setRNotes=_rNotes[1];
@@ -27,7 +27,7 @@ function App(){
   var _csvCt=useState(0);var csvCt=_csvCt[0];var setCsvCt=_csvCt[1];
   var csvRef=useRef(null);
   // Strength state
-  var _sDate=useState("");var sDate=_sDate[0];var setSDate=_sDate[1];
+  var _sDate=useState(toDay());var sDate=_sDate[0];var setSDate=_sDate[1];
   var _sWkt=useState("A");var sWkt=_sWkt[0];var setSWkt=_sWkt[1];
   var _sSets=useState({});var sSets=_sSets[0];var setSSets=_sSets[1];
   var _sNotes=useState("");var sNotes=_sNotes[0];var setSNotes=_sNotes[1];
@@ -35,7 +35,7 @@ function App(){
   var _sView=useState(null);var sView=_sView[0];var setSView=_sView[1];
   var _exModal=useState(null);var exModal=_exModal[0];var setExModal=_exModal[1];
   // HR state
-  var _hDate=useState("");var hDate=_hDate[0];var setHDate=_hDate[1];
+  var _hDate=useState(toDay());var hDate=_hDate[0];var setHDate=_hDate[1];
   var _hRest=useState("");var hRest=_hRest[0];var setHRest=_hRest[1];
   var _hAvg=useState("");var hAvg=_hAvg[0];var setHAvg=_hAvg[1];
   var _hMax=useState("");var hMax=_hMax[0];var setHMax=_hMax[1];
@@ -44,7 +44,7 @@ function App(){
   var _hSaved=useState(false);var hSaved=_hSaved[0];var setHSaved=_hSaved[1];
   // Nutrition state
   var _mData=useState({});var mData=_mData[0];var setMData=_mData[1];
-  var _nDate=useState("");var nDate=_nDate[0];var setNDate=_nDate[1];
+  var _nDate=useState(toDay());var nDate=_nDate[0];var setNDate=_nDate[1];
   var _nType=useState("run");var nType=_nType[0];var setNType=_nType[1];
   var _nNotes=useState("");var nNotes=_nNotes[0];var setNNotes=_nNotes[1];
   var _nSaved=useState(false);var nSaved=_nSaved[0];var setNSaved=_nSaved[1];
@@ -88,7 +88,7 @@ function App(){
     var p=parseGarmin(rRaw);
     var entry=Object.assign({date:rDate,type:rType,raw:rRaw,notes:rNotes,week:week},p);
     var u=[entry].concat(runs).slice(0,200);
-    setRuns(u);sv("a8_r",u);setRRaw("");setRNotes("");setRDate("");setRSaved(true);
+    setRuns(u);sv("a8_r",u);setRRaw("");setRNotes("");setRDate(toDay());setRSaved(true);
     setTimeout(function(){setRSaved(false);},2000);
   };
 
@@ -123,7 +123,7 @@ function App(){
     }).filter(function(ex){return ex.logs.length>0;});
     var entry={date:sDate,wkt:sWkt,sets:sets,notes:sNotes,week:week};
     var u=[entry].concat(strength).slice(0,200);
-    setStrength(u);sv("a8_s",u);setSDate("");setSNotes("");setSSets({});setSSaved(true);
+    setStrength(u);sv("a8_s",u);setSDate(toDay());setSNotes("");setSSets({});setSSaved(true);
     setTimeout(function(){setSSaved(false);},2000);
   };
 
@@ -131,7 +131,7 @@ function App(){
     if(!hDate)return;
     var entry={date:hDate,resting:hRest?+hRest:null,runAvg:hAvg?+hAvg:null,runMax:hMax?+hMax:null,hrRecovery:hRec?+hRec:null,hrv:hHrv?+hHrv:null};
     var u=[entry].concat(hr).slice(0,200);
-    setHr(u);sv("a8_h",u);setHDate("");setHRest("");setHAvg("");setHMax("");setHRec("");setHHrv("");setHSaved(true);
+    setHr(u);sv("a8_h",u);setHDate(toDay());setHRest("");setHAvg("");setHMax("");setHRec("");setHHrv("");setHSaved(true);
     setTimeout(function(){setHSaved(false);},2000);
   };
 
@@ -146,7 +146,7 @@ function App(){
     MEALS.forEach(function(m){var c=parseFloat(getM(m,"cal"))||0;if(c>0)meals[m]={cal:c,protein:parseFloat(getM(m,"protein"))||0,carbs:parseFloat(getM(m,"carbs"))||0,fat:parseFloat(getM(m,"fat"))||0};});
     var entry={date:nDate,dayType:nType,meals:meals,calories:Math.round(mTot.cal),protein:Math.round(mTot.protein),carbs:Math.round(mTot.carbs),fat:Math.round(mTot.fat),notes:nNotes};
     var u=[entry].concat(nutrition).slice(0,200);
-    setNutrition(u);sv("a8_n",u);setMData({});setNDate("");setNNotes("");setNSaved(true);
+    setNutrition(u);sv("a8_n",u);setMData({});setNDate(toDay());setNNotes("");setNSaved(true);
     setTimeout(function(){setNSaved(false);},2500);
   };
 
@@ -429,7 +429,7 @@ function App(){
         e("div",{style:Object.assign({},cardS({marginBottom:14}),{borderTop:"3px solid #0ea5e9"})},
           e("div",{style:{fontSize:15,fontWeight:700,color:C.text,marginBottom:16}},"Paste Single Activity"),
           e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
-            e("div",null,e(Lbl,null,"Date"),e(Inp,{value:rDate,onChange:function(ev){setRDate(ev.target.value);},placeholder:today})),
+            e("div",null,e(Lbl,null,"Date"),e(Inp,{type:"date",max:today,value:rDate,onChange:function(ev){setRDate(ev.target.value);}})),
             e("div",null,e(Lbl,null,"Type"),e(Sel,{value:rType,onChange:function(ev){setRType(ev.target.value);},opts:[["run","Easy Run"],["long_run","Long Run"],["tempo","Tempo"],["intervals","Intervals"],["recovery","Recovery"]]}))
           ),
           e("div",{style:{marginBottom:12}},e(Lbl,null,"Garmin Activity Summary"),e(Inp,{value:rRaw,onChange:function(ev){setRRaw(ev.target.value);},placeholder:"Distance: 5.2 mi | Avg Pace: 8:57/mi | Avg HR: 158 bpm | Max HR: 174 bpm | HR Recovery: 28 bpm | Calories: 520",multi:true})),
@@ -489,7 +489,7 @@ function App(){
               e("div",{style:{fontSize:15,fontWeight:800,color:C.text}},WORKOUTS[sWkt].label),
               e("div",{style:{fontSize:12,color:C.textSoft,marginTop:2}},WORKOUTS[sWkt].day)
             ),
-            e("div",{style:{width:"44%"}},e(Lbl,null,"Date"),e(Inp,{value:sDate,onChange:function(ev){setSDate(ev.target.value);},placeholder:today}))
+            e("div",{style:{width:"44%"}},e(Lbl,null,"Date"),e(Inp,{type:"date",max:today,value:sDate,onChange:function(ev){setSDate(ev.target.value);}}))
           ),
           WORKOUTS[sWkt].exercises.map(function(ex){
             var frames=getFrames(ex.id);
@@ -583,7 +583,7 @@ function App(){
         // Meal log form
         e("div",{style:Object.assign({},cardS({marginBottom:14}),{borderTop:"3px solid #06b6d4"})},
           e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}},
-            e("div",null,e(Lbl,null,"Date"),e(Inp,{value:nDate,onChange:function(ev){setNDate(ev.target.value);},placeholder:today})),
+            e("div",null,e(Lbl,null,"Date"),e(Inp,{type:"date",max:today,value:nDate,onChange:function(ev){setNDate(ev.target.value);}})),
             e("div",null,e(Lbl,null,"Day Type"),e(Sel,{value:nType,onChange:function(ev){setNType(ev.target.value);},opts:[["run","Run Day (Sun/Tue/Thu)"],["strength","Strength Day (Mon/Wed/Fri)"],["rest","Rest Day"]]}))
           ),
           MEALS.map(function(meal){
@@ -698,7 +698,7 @@ function App(){
           e("div",{style:{fontSize:14,fontWeight:700,color:C.text,marginBottom:4}},"Log Heart Rate Data"),
           e("div",{style:{fontSize:12,color:C.textSoft,marginBottom:14}},"Resting HR → Health Stats · Run HR → Activity · HRV → HRV Status"),
           e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
-            e("div",null,e(Lbl,null,"Date"),e(Inp,{value:hDate,onChange:function(ev){setHDate(ev.target.value);},placeholder:today})),
+            e("div",null,e(Lbl,null,"Date"),e(Inp,{type:"date",max:today,value:hDate,onChange:function(ev){setHDate(ev.target.value);}})),
             e("div",null,e(Lbl,null,"Resting HR (bpm)"),e(Inp,{value:hRest,onChange:function(ev){setHRest(ev.target.value);},placeholder:"e.g. 52"})),
             e("div",null,e(Lbl,null,"Run Avg HR (bpm)"),e(Inp,{value:hAvg,onChange:function(ev){setHAvg(ev.target.value);},placeholder:"e.g. 158"})),
             e("div",null,e(Lbl,null,"Run Max HR (bpm)"),e(Inp,{value:hMax,onChange:function(ev){setHMax(ev.target.value);},placeholder:"e.g. 174"})),
