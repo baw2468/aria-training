@@ -26,6 +26,7 @@ function App(){
   var _csvSt=useState(null);var csvSt=_csvSt[0];var setCsvSt=_csvSt[1];
   var _csvCt=useState(0);var csvCt=_csvCt[0];var setCsvCt=_csvCt[1];
   var csvRef=useRef(null);
+  var swipeX=useRef(0);var swipeY=useRef(0);
   // Strength state
   var _sDate=useState(toDay());var sDate=_sDate[0];var setSDate=_sDate[1];
   var _sWkt=useState("A");var sWkt=_sWkt[0];var setSWkt=_sWkt[1];
@@ -212,8 +213,20 @@ function App(){
     );
   }
 
+  // ── SWIPE HANDLERS ───────────────────────────────────────────────
+  var TABS_ORDER=["home","calendar","insights","run","strength","nutrition","health"];
+  var onTouchStart=function(ev){swipeX.current=ev.touches[0].clientX;swipeY.current=ev.touches[0].clientY;};
+  var onTouchEnd=function(ev){
+    var dx=ev.changedTouches[0].clientX-swipeX.current;
+    var dy=ev.changedTouches[0].clientY-swipeY.current;
+    if(Math.abs(dx)<50||Math.abs(dx)<=Math.abs(dy))return;
+    var idx=TABS_ORDER.indexOf(tab);
+    if(dx<0&&idx<TABS_ORDER.length-1)setTab(TABS_ORDER[idx+1]);
+    else if(dx>0&&idx>0)setTab(TABS_ORDER[idx-1]);
+  };
+
   // ── MAIN RENDER ───────────────────────────────────────────────────
-  return e("div",{style:{minHeight:"100vh",background:"linear-gradient(160deg,"+C.bg+","+C.bgDeep+")",color:C.text,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",paddingBottom:82,position:"relative"}},
+  return e("div",{onTouchStart:onTouchStart,onTouchEnd:onTouchEnd,style:{minHeight:"100vh",background:"linear-gradient(160deg,"+C.bg+","+C.bgDeep+")",color:C.text,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",paddingBottom:82,position:"relative"}},
 
     // Syncing indicator
     syncing?e("div",{style:{position:"fixed",top:12,right:12,zIndex:999,background:"#10b981",color:"#fff",fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,boxShadow:"0 2px 8px rgba(16,185,129,0.4)"}},"Saving..."):null,
