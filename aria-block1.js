@@ -322,7 +322,7 @@ const parseCSV=text=>{
   return lines.slice(1).map(line=>{
     const vals=line.split(",").map(v=>v.trim().replace(/"/g,""));const row={};hdrs.forEach((h,j)=>row[h]=vals[j]||"");
     const dr=row["date"]||row["start time"]||row["activity date"]||"";const date=dr.split(" ")[0];if(!date)return null;
-    return{date,week:dateToWeek(date),dist:(row["distance"]||"").replace(/[^\d.]/g,"")||null,pace:row["avg pace"]||null,time:row["time"]||row["elapsed time"]||null,hrAvg:row["avg hr"]||row["average heart rate (bpm)"]||null,hrMax:row["max hr"]||null,cal:row["calories"]||null,type:classifyGarminType(row["activity type"]||row["type"]||""),raw:"Garmin CSV",hrRec:null};
+    return{date,week:dateToWeek(date),dist:(row["distance"]||"").replace(/[^\d.]/g,"")||null,pace:row["avg pace"]||null,time:row["time"]||row["elapsed time"]||null,hrAvg:row["avg hr"]||row["average heart rate (bpm)"]||null,hrMax:row["max hr"]||null,cal:row["calories"]||null,type:classifyGarminType(row["activity type"]||row["type"]||row["title"]||""),raw:"Garmin CSV",hrRec:null};
   }).filter(Boolean);
 };
 function getPlannedForDate(date){

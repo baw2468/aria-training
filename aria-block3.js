@@ -102,10 +102,12 @@ function App(){
       try{
         var parsed=parseCSV(e2.target.result);
         if(!parsed.length){setCsvSt("error");return;}
-        var ex=new Set(runs.map(function(r2){return r2.date+"_"+r2.dist;}));
-        var fr=parsed.filter(function(r2){return !ex.has(r2.date+"_"+r2.dist);});
-        var u=fr.concat(runs).sort(function(a,b){return b.date.localeCompare(a.date);}).slice(0,200);
-        setRuns(u);sv("a8_r",u);setCsvCt(fr.length);setCsvSt("done");
+        // Build a lookup of newly parsed entries by date+dist
+        var parsedKeys={};parsed.forEach(function(p){parsedKeys[p.date+"_"+(p.dist||"")]=1;});
+        // Drop existing Garmin CSV entries that are being replaced; keep manual entries always
+        var kept=runs.filter(function(r2){return !(r2.raw==="Garmin CSV"&&parsedKeys[r2.date+"_"+(r2.dist||"")]);});
+        var u=parsed.concat(kept).sort(function(a,b){return b.date.localeCompare(a.date);}).slice(0,200);
+        setRuns(u);sv("a8_r",u);setCsvCt(parsed.length);setCsvSt("done");
         setTimeout(function(){setCsvSt(null);},4000);
       }catch(err){setCsvSt("error");setTimeout(function(){setCsvSt(null);},3000);}
     };
