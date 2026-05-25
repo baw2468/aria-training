@@ -285,7 +285,28 @@ function App(){
                 e("div",{style:{fontSize:13,fontWeight:600,color:C.text}},WKT_LABEL[todayPlan.strWkt]+" · "+WKT_DAY[todayPlan.strWkt])
               ),
               strength.find(function(s){return s.date===today;})?e("span",{style:{fontSize:10,fontWeight:700,color:C.good}},"✓ Done"):null
-            ):null
+            ):null,
+            (function(){
+              var runDone=runs.find(function(r){return r.date===today&&isRunActivity(r.type);});
+              var strDone=strength.find(function(s){return s.date===today;});
+              var showRun=!!(todayPlan.runLabel&&todayPlan.runLabel!=="REST");
+              var showStr=!!todayPlan.strWkt;
+              if(!showRun&&!showStr)return null;
+              return e("div",{style:{display:"flex",gap:8,flexWrap:"wrap",paddingTop:4}},
+                showRun?(runDone?
+                  e("div",{style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"9px 14px",background:C.good+"12",border:"1px solid "+C.good+"25",borderRadius:10}},
+                    e("span",{style:{fontSize:12,color:C.good,fontWeight:700}},"✓ Run Logged")
+                  ):
+                  e("button",{onClick:function(){setTab("run");},style:{flex:1,padding:"10px 14px",background:"linear-gradient(90deg,#0ea5e9,#6366f1)",border:"none",borderRadius:10,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(99,102,241,0.3)"}},"Log Today's Run")
+                ):null,
+                showStr?(strDone?
+                  e("div",{style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"9px 14px",background:C.good+"12",border:"1px solid "+C.good+"25",borderRadius:10}},
+                    e("span",{style:{fontSize:12,color:C.good,fontWeight:700}},"✓ Strength Logged")
+                  ):
+                  e("button",{onClick:function(){setTab("strength");},style:{flex:1,padding:"10px 14px",background:"#f59e0b",border:"none",borderRadius:10,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(245,158,11,0.3)"}},"Log Strength")
+                ):null
+              );
+            })()
           ):e("div",{style:{padding:14,background:C.recovery+"08",border:"1px solid "+C.recovery+"20",borderRadius:10,fontSize:13,color:C.recovery,fontWeight:600}},"🌿 Rest day — recovery is training too.")
         ),
 
