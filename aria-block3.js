@@ -258,6 +258,16 @@ function App(){
               );
             })
           ),
+          (function(){var pct=plan.miles>0?(wkMi/plan.miles)*100:0;var pClr=pct>=100?C.good:pct>=70?"#6366f1":"#0ea5e9";return e("div",{style:{padding:"10px 16px 2px"}},
+            e("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:5}},
+              e("span",{style:{color:C.textSoft}},"Weekly Miles"),
+              e("span",{style:{color:pClr}},wkMi.toFixed(1)+" / "+plan.miles+" mi")
+            ),
+            e("div",{style:{height:8,background:C.bgDeep,borderRadius:4,overflow:"hidden",border:"1px solid "+C.border}},
+              e("div",{style:{height:"100%",width:Math.min(100,pct)+"%",background:pClr,borderRadius:4,transition:"width 0.6s ease"}})
+            ),
+            plan.recovery?e("div",{style:{fontSize:10,color:C.recovery,fontWeight:600,marginTop:5}},"Any mileage logged is a win this recovery week"):null
+          );})(),
           e("div",{style:{padding:"12px 16px"}},
             e("div",{style:{fontSize:13,color:C.textMid,lineHeight:1.55}},A.summary),
             factors.length>0?e("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}},
