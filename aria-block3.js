@@ -496,7 +496,33 @@ function App(){
               )
             );
           })
-        ):null
+        ):null,
+
+        // Personal Records card
+        (function(){
+          var qualRuns=runs.filter(function(r){return isRunActivity(r.type);});
+          if(!qualRuns.length)return null;
+          var longest=qualRuns.reduce(function(a,r){var d=parseFloat(r.dist||0);return d>a.d?{d:d,date:r.date}:a;},{d:0,date:""});
+          var paceRuns=qualRuns.filter(function(r){return r.pace&&parseFloat(r.dist||0)>=2&&r.type!=="recovery";});
+          var fastest=paceRuns.reduce(function(a,r){var pts=(r.pace+"").split(":");var s=parseInt(pts[0],10)*60+(parseInt(pts[1],10)||0);return s>0&&(a.s===0||s<a.s)?{s:s,pace:r.pace,date:r.date}:a;},{s:0,pace:"",date:""});
+          var bestHR=qualRuns.filter(function(r){return r.hrRec&&parseInt(r.hrRec)>0;}).reduce(function(a,r){var v=parseInt(r.hrRec);return v>a.v?{v:v,date:r.date}:a;},{v:0,date:""});
+          var wkMap={};qualRuns.forEach(function(r){if(r.week)wkMap[r.week]=(wkMap[r.week]||0)+parseFloat(r.dist||0);});
+          var bestWk=Object.keys(wkMap).reduce(function(a,k){return wkMap[k]>a.mi?{wk:k,mi:wkMap[k]}:a;},{wk:"",mi:0});
+          var cell=function(label,val,unit,date,clr){return e("div",{style:{background:C.bgDeep,borderRadius:10,padding:"12px 14px",border:"1px solid "+clr+"1a"}},
+            e("div",{style:{fontSize:10,color:clr,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}},label),
+            e("div",{style:{fontSize:22,fontWeight:900,color:clr,lineHeight:1}},val,val!=="—"?e("span",{style:{fontSize:11,fontWeight:500,color:C.textSoft}}," "+unit):null),
+            date?e("div",{style:{fontSize:10,color:C.textSoft,marginTop:4}},date):null
+          );};
+          return e("div",{style:cardS({marginTop:14})},
+            e("div",{style:{fontSize:12,fontWeight:700,color:C.textSoft,letterSpacing:1.5,textTransform:"uppercase",marginBottom:12}},"Personal Records"),
+            e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+              cell("Longest Run",longest.d>0?longest.d.toFixed(1):"—","mi",longest.date,"#6366f1"),
+              cell("Fastest Pace",fastest.pace||"—",fastest.pace?"/mi":"",fastest.date,"#0ea5e9"),
+              cell("Best HR Recovery",bestHR.v>0?"−"+bestHR.v:"—","bpm",bestHR.date,C.good),
+              cell("Best Week",bestWk.mi>0?bestWk.mi.toFixed(1):"—","mi",bestWk.wk?"Week "+bestWk.wk:"",C.strength)
+            )
+          );
+        })()
       ):null,
 
       // ════════════════════════════════════════════
