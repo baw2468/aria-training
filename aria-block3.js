@@ -488,7 +488,11 @@ function App(){
                   r.pace?e("span",{style:{fontSize:12,color:C.textMid}},r.pace+"/mi"):null,
                   r.hrAvg?e("span",{style:{fontSize:12,color:C.hr}},"HR "+r.hrAvg+"/"+(r.hrMax||"?")+"bpm"):null,
                   r.hrRec?e("span",{style:{fontSize:12,color:C.good}},"−"+r.hrRec+"bpm rec"):null
-                )
+                ),
+                (function(){var pz=getPaceZone(r.type,r.pace,r.dist);return pz?e("div",{style:{display:"flex",gap:6,alignItems:"flex-start",marginTop:4}},
+                  e("span",{style:{fontSize:10,fontWeight:800,padding:"2px 7px",borderRadius:8,background:pz.color+"15",color:pz.color,border:"1px solid "+pz.color+"30",flexShrink:0,whiteSpace:"nowrap"}},pz.rating),
+                  e("span",{style:{fontSize:11,color:C.textSoft,lineHeight:1.4}},pz.msg)
+                ):null;})()
               )
             );
           })

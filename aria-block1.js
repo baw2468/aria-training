@@ -11,6 +11,27 @@ const RUN_COLOR={run:"#0ea5e9",long_run:"#6366f1",tempo:"#8b5cf6",intervals:"#8b
 const runColor=(t)=>RUN_COLOR[t]||RUN_COLOR.run;
 function isRunActivity(type){var t=(type||"run").toLowerCase();return t!=="walk"&&t!=="cross"&&!t.includes("hike")&&!t.includes("cycl")&&!t.includes("swim")&&!t.includes("row")&&!t.includes("yoga")&&!t.includes("weight");}
 function classifyGarminType(raw){var t=(raw||"").toLowerCase();if(t.includes("walk")||t.includes("hike"))return"walk";if(t.includes("long")||t.includes("trail"))return"long_run";if(t.includes("tempo")||t.includes("race")||t.includes("interval")||t.includes("track"))return"tempo";if(t.includes("recov")||t.includes("easy"))return"recovery";if(t.includes("run")||t.includes("jog"))return"run";if(t.includes("cycl")||t.includes("bike")||t.includes("swim")||t.includes("strength")||t.includes("gym")||t.includes("yoga")||t.includes("fitness"))return"cross";return"run";}
+function getPaceZone(type,pace,dist){
+  if(!isRunActivity(type)||!pace||!dist||parseFloat(dist)<2)return null;
+  var parts=(pace+"").split(":");if(parts.length<2)return null;
+  var secs=parseInt(parts[0],10)*60+parseInt(parts[1],10);
+  if(isNaN(secs)||secs<=0)return null;
+  var t=(type||"run").toLowerCase();var rating,color,msg;
+  if(t==="long_run"){
+    if(secs<540){rating="Too Fast";color=C.hr;msg="Long runs should feel conversational. Slow down — you're building base, not racing.";}
+    else if(secs<=660){rating="Perfect";color=C.good;msg="Ideal long run pace. Building aerobic base without excess stress.";}
+    else{rating="Relaxed";color=C.warn;msg="A bit slow, fine early in training. Aim for 9-11 min/mi as fitness builds.";}
+  }else if(t==="tempo"||t==="intervals"){
+    if(secs<510){rating="Too Fast";color=C.hr;msg="Overexertion risk. Tempo should be comfortably hard — back off slightly.";}
+    else if(secs<=550){rating="Perfect";color=C.good;msg="Spot-on tempo pace. Efficiently training lactate threshold.";}
+    else{rating="Too Slow";color=C.warn;msg="Below tempo zone. Push to 8:30-9:10 to get the threshold stimulus.";}
+  }else{
+    if(secs<540){rating="Too Fast";color=C.hr;msg="Too fast for an easy day. Fully conversational means slowing down.";}
+    else if(secs<=690){rating="Perfect";color=C.good;msg="Perfect easy pace. Building your aerobic engine at the right effort.";}
+    else{rating="Relaxed";color=C.warn;msg="Slower side — fine for recovery days. Aim 9-11:30 on standard easy runs.";}
+  }
+  return{rating:rating,color:color,msg:msg};
+}
 const WKT_COLOR={A:"#f59e0b",B:"#f59e0b",C:"#f59e0b",D:"#f59e0b"};
 const WKT_LABEL={A:"Lower Body",B:"Upper Push",C:"Upper Pull + Core",D:"Plyometrics"};
 const WKT_DAY={A:"Monday",B:"Wednesday",C:"Friday",D:"Sunday PM"};
