@@ -304,6 +304,7 @@ function analyze(week,plan,runs,strength,hr,nutrition){
 const getWeek=()=>{try{const w=Math.floor((new Date()-PLAN_START)/(7*24*60*60*1000))+1;return Math.max(1,Math.min(23,w));}catch(e){return 1;}};
 const getDTR=()=>Math.max(0,Math.ceil((RACE_DATE-new Date())/(24*60*60*1000)));
 const toDay=()=>{const n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");};
+const dateToWeek=(d)=>{const aw=Math.floor((new Date(d+"T00:00:00")-PLAN_START)/(7*24*60*60*1000));return aw<0?0:aw>=23?24:aw+1;};
 const greet=()=>{const h=new Date().getHours();return h<12?"morning":h<18?"afternoon":"evening";};
 const parseGarmin=t=>({
   dist:t.match(/(\d+\.?\d*)\s*mi(?!n)/i)?.[1]||null,
@@ -321,8 +322,7 @@ const parseCSV=text=>{
   return lines.slice(1).map(line=>{
     const vals=line.split(",").map(v=>v.trim().replace(/"/g,""));const row={};hdrs.forEach((h,j)=>row[h]=vals[j]||"");
     const dr=row["date"]||row["start time"]||row["activity date"]||"";const date=dr.split(" ")[0];if(!date)return null;
-    const aw=Math.floor((new Date(date+"T00:00:00")-PLAN_START)/(7*24*60*60*1000));const actWeek=(aw<0||aw>=161)?null:Math.max(1,Math.min(23,aw+1));
-    return{date,week:actWeek,dist:(row["distance"]||"").replace(/[^\d.]/g,"")||null,pace:row["avg pace"]||null,time:row["time"]||row["elapsed time"]||null,hrAvg:row["avg hr"]||row["average heart rate (bpm)"]||null,hrMax:row["max hr"]||null,cal:row["calories"]||null,type:classifyGarminType(row["activity type"]||""),raw:"Garmin CSV",hrRec:null};
+    return{date,week:dateToWeek(date),dist:(row["distance"]||"").replace(/[^\d.]/g,"")||null,pace:row["avg pace"]||null,time:row["time"]||row["elapsed time"]||null,hrAvg:row["avg hr"]||row["average heart rate (bpm)"]||null,hrMax:row["max hr"]||null,cal:row["calories"]||null,type:classifyGarminType(row["activity type"]||row["type"]||""),raw:"Garmin CSV",hrRec:null};
   }).filter(Boolean);
 };
 function getPlannedForDate(date){

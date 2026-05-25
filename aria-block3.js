@@ -87,7 +87,7 @@ function App(){
   var addRun=function(){
     if(!rDate||!rRaw.trim())return;
     var p=parseGarmin(rRaw);
-    var entry=Object.assign({date:rDate,type:rType,raw:rRaw,notes:rNotes,week:week},p);
+    var entry=Object.assign({date:rDate,type:rType,raw:rRaw,notes:rNotes,week:dateToWeek(rDate)},p);
     var u=[entry].concat(runs).slice(0,200);
     setRuns(u);sv("a8_r",u);setRRaw("");setRNotes("");setRDate(toDay());setRSaved(true);
     setTimeout(function(){setRSaved(false);},2000);
@@ -432,7 +432,7 @@ function App(){
         ),
         // ── IC1: Training Load Chart ──────────────────────────
         (function(){
-          var qr=runs.filter(function(r){return isRunActivity(r.type)&&r.week;});
+          var qr=runs.filter(function(r){return isRunActivity(r.type)&&r.week>=1&&r.week<=23;});
           var w4=[];for(var wi=Math.max(1,week-3);wi<=week;wi++){var mi=qr.filter(function(r){return r.week===wi;}).reduce(function(a,r){return a+parseFloat(r.dist||0);},0);w4.push({wk:wi,mi:mi,target:(PLAN[wi]||PLAN[1]).miles});}
           if(!w4.some(function(x){return x.mi>0;}))return null;
           var maxV=Math.max.apply(null,w4.map(function(x){return Math.max(x.mi,x.target);}));
@@ -564,7 +564,7 @@ function App(){
 
         // IC5 — Weekly Comparison Table
         (function(){
-          var qr=runs.filter(function(r){return isRunActivity(r.type)&&r.week;});
+          var qr=runs.filter(function(r){return isRunActivity(r.type)&&r.week>=1&&r.week<=23;});
           var seen={};var allWks=[];
           qr.forEach(function(r){if(!seen[r.week]){seen[r.week]=1;allWks.push(r.week);}});
           if(allWks.length<2)return null;
@@ -659,7 +659,7 @@ function App(){
                   e("span",{style:{fontSize:13,fontWeight:600,color:C.text}},r.date),
                   e("div",{style:{display:"flex",gap:5}},
                     e(Tag,{color:actColor},r.type),
-                    r.week?e(Tag,{color:"#6366f1"},"Wk"+r.week):null
+                    (r.week>=1&&r.week<=23)?e(Tag,{color:"#6366f1"},"Wk"+r.week):((!r.week||r.week===0)?e(Tag,{color:C.textSoft},"Pre-plan"):null)
                   )
                 ),
                 e("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
