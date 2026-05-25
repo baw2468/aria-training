@@ -571,7 +571,7 @@ function App(){
           var curWk=week;
           var lastWk=week-1;
           // miles per week (run only)
-          function wkMiles(w){return qr.filter(function(r){return r.week===w;}).reduce(function(s,r){return s+r.dist;},0);}
+          function wkMiles(w){return qr.filter(function(r){return r.week===w;}).reduce(function(s,r){return s+parseFloat(r.dist||0);},0);}
           function wkRuns(w){return qr.filter(function(r){return r.week===w;}).length;}
           function wkStr(w){return strength.filter(function(s){return s.week===w;}).length;}
           function wkNut(w){
