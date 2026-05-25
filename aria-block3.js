@@ -430,6 +430,119 @@ function App(){
             )
           )
         ),
+        // ── IC1: Training Load Chart ──────────────────────────
+        (function(){
+          var qr=runs.filter(function(r){return isRunActivity(r.type)&&r.week;});
+          var w4=[];for(var wi=Math.max(1,week-3);wi<=week;wi++){var mi=qr.filter(function(r){return r.week===wi;}).reduce(function(a,r){return a+parseFloat(r.dist||0);},0);w4.push({wk:wi,mi:mi,target:(PLAN[wi]||PLAN[1]).miles});}
+          if(!w4.some(function(x){return x.mi>0;}))return null;
+          var maxV=Math.max.apply(null,w4.map(function(x){return Math.max(x.mi,x.target);}));
+          var BH=80;
+          return e("div",{style:Object.assign({},glass(),{padding:0,marginBottom:12,overflow:"hidden"})},
+            e("div",{style:{height:4,background:"linear-gradient(90deg,#0ea5e9,#6366f1)"}}),
+            e("div",{style:{padding:"12px 14px 10px"}},
+              e("div",{style:{fontSize:11,fontWeight:700,color:C.textSoft,letterSpacing:1.5,textTransform:"uppercase",marginBottom:12}},"Weekly Training Load"),
+              e("div",{style:{display:"flex",gap:8,alignItems:"flex-end",justifyContent:"space-around"}},
+                w4.map(function(x,i){
+                  var cur=x.wk===week;var bh=maxV>0?Math.round((x.mi/maxV)*BH):2;var ty=maxV>0?BH-Math.round((x.target/maxV)*BH):0;
+                  return e("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}},
+                    e("div",{style:{fontSize:11,fontWeight:700,color:cur?"#6366f1":C.textSoft}},x.mi>0?x.mi.toFixed(1):"0"),
+                    e("div",{style:{position:"relative",width:"100%",height:BH+"px",display:"flex",alignItems:"flex-end"}},
+                      e("div",{style:{width:"100%",height:Math.max(2,bh)+"px",background:cur?"linear-gradient(180deg,#0ea5e9,#6366f1)":"rgba(99,102,241,0.3)",borderRadius:"4px 4px 0 0",transition:"height 0.5s"}}),
+                      e("div",{style:{position:"absolute",left:0,right:0,top:ty+"px",borderTop:"2px dashed "+C.warn,opacity:0.85}})
+                    ),
+                    e("div",{style:{fontSize:10,color:C.textSoft,fontWeight:cur?700:400}},"Wk"+x.wk)
+                  );
+                })
+              ),
+              e("div",{style:{display:"flex",gap:14,marginTop:10,justifyContent:"center"}},
+                e("div",{style:{display:"flex",alignItems:"center",gap:4}},e("div",{style:{width:12,height:8,background:"linear-gradient(90deg,#0ea5e9,#6366f1)",borderRadius:2}}),e("span",{style:{fontSize:10,color:C.textSoft}},"Miles logged")),
+                e("div",{style:{display:"flex",alignItems:"center",gap:4}},e("div",{style:{width:12,height:2,background:C.warn,borderRadius:1}}),e("span",{style:{fontSize:10,color:C.textSoft}},"Week target"))
+              )
+            )
+          );
+        })(),
+        // ── IC2: Aerobic Efficiency Trend ────────────────────
+        (function(){
+          var pp=function(p){var pts=(p+"").split(":");return parseInt(pts[0],10)*60+(parseInt(pts[1],10)||0);};
+          var er=runs.filter(function(r){return(r.type==="run"||r.type==="recovery")&&parseFloat(r.dist||0)>=2&&r.pace&&r.hrAvg;});
+          if(er.length<3)return null;
+          var d=er.slice(0,8).reverse();
+          var improving=false;
+          if(d.length>=4){var h=Math.ceil(d.length/2);var rec=d.slice(-h);var old=d.slice(0,d.length-h);var rpace=rec.reduce(function(a,r){return a+pp(r.pace);},0)/rec.length;var opace=old.reduce(function(a,r){return a+pp(r.pace);},0)/old.length;var rhr=rec.reduce(function(a,r){return a+(parseInt(r.hrAvg)||0);},0)/rec.length;var ohr=old.reduce(function(a,r){return a+(parseInt(r.hrAvg)||0);},0)/old.length;improving=rpace<opace&&rhr<=ohr+2;}
+          var W=280,H=70,pad=8;
+          var paces=d.map(function(r){return pp(r.pace);});var hrs=d.map(function(r){return parseInt(r.hrAvg)||0;});
+          var minP=Math.min.apply(null,paces),maxP=Math.max.apply(null,paces),rP=Math.max(maxP-minP,1);
+          var minH=Math.min.apply(null,hrs),maxH=Math.max.apply(null,hrs),rH=Math.max(maxH-minH,1);
+          var ppts=d.map(function(r,i){var x=pad+(i/(d.length-1))*(W-2*pad);var y=H-pad-((pp(r.pace)-minP)/rP)*(H-2*pad);return x+","+y;}).join(" ");
+          var hpts=d.map(function(r,i){var x=pad+(i/(d.length-1))*(W-2*pad);var y=H-pad-((parseInt(r.hrAvg)-minH)/rH)*(H-2*pad);return x+","+y;}).join(" ");
+          return e("div",{style:cardS({marginBottom:12})},
+            e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
+              e("div",null,e("div",{style:{fontSize:11,fontWeight:700,color:C.textSoft,letterSpacing:1.5,textTransform:"uppercase",marginBottom:2}},"Aerobic Efficiency"),e("div",{style:{fontSize:12,color:C.textMid}},"Pace vs HR · last "+d.length+" easy runs")),
+              improving?e("div",{style:{fontSize:10,fontWeight:800,padding:"3px 9px",borderRadius:10,background:C.good+"14",border:"1px solid "+C.good+"28",color:C.good}},"Improving"):null
+            ),
+            e("svg",{width:"100%",height:H,viewBox:"0 0 "+W+" "+H,style:{overflow:"visible"}},
+              e("polyline",{points:ppts,fill:"none",stroke:"#6366f1",strokeWidth:2.5,strokeLinejoin:"round"}),
+              e("polyline",{points:hpts,fill:"none",stroke:C.hr,strokeWidth:2,strokeLinejoin:"round",strokeDasharray:"5,3"})
+            ),
+            improving?e("div",{style:{fontSize:12,color:C.good,marginTop:6,lineHeight:1.5}},"Your aerobic base is building — same pace at lower HR means your engine is getting more efficient."):null,
+            e("div",{style:{display:"flex",gap:14,marginTop:8,justifyContent:"center"}},
+              e("div",{style:{display:"flex",alignItems:"center",gap:4}},e("div",{style:{width:12,height:3,background:"#6366f1",borderRadius:1}}),e("span",{style:{fontSize:10,color:C.textSoft}},"Pace")),
+              e("div",{style:{display:"flex",alignItems:"center",gap:4}},e("div",{style:{width:12,height:3,background:C.hr,borderRadius:1}}),e("span",{style:{fontSize:10,color:C.textSoft}},"Avg HR (dashed)"))
+            )
+          );
+        })(),
+        // ── IC3: Phase Progress ──────────────────────────────
+        (function(){
+          var phRanges={1:[1,10],2:[11,16],3:[17,21],4:[22,23]};var ph=plan.phase||1;var pr=phRanges[ph]||[1,23];
+          var phTotal=pr[1]-pr[0]+1;var phWeek=week-pr[0]+1;var phPct=Math.min(100,Math.round((phWeek/phTotal)*100));
+          var descs={1:"Building your aerobic base. Every easy mile is building the engine that powers your race pace.",2:"Developing speed and lactate threshold. Intervals are the key — protect them.",3:"Race-specific fitness. You are running at goal pace now. Trust the training.",4:"Protecting your fitness for race day. Less is more. Your work is done."};
+          return e("div",{style:Object.assign({},glass(),{padding:0,marginBottom:12,overflow:"hidden"})},
+            e("div",{style:{height:4,background:PHASE_GRAD[ph]}}),
+            e("div",{style:{padding:"12px 14px 14px"}},
+              e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}},
+                e("div",null,e("div",{style:{fontSize:10,fontWeight:700,color:C.textSoft,letterSpacing:1.5,textTransform:"uppercase",marginBottom:2}},"Phase "+ph+" · "+PHASE_NAME[ph]),e("div",{style:{fontSize:15,fontWeight:800,color:C.text}},"Week "+phWeek+" of "+phTotal)),
+                e("div",{style:{fontSize:28,fontWeight:900,color:"#6366f1",lineHeight:1}},phPct,e("span",{style:{fontSize:11,fontWeight:500,color:C.textSoft}},"%"))
+              ),
+              e("div",{style:{height:8,background:C.bgDeep,borderRadius:4,overflow:"hidden",marginBottom:10}},
+                e("div",{style:{height:"100%",width:phPct+"%",background:PHASE_GRAD[ph],borderRadius:4,transition:"width 0.6s ease"}})
+              ),
+              e("div",{style:{fontSize:12,color:C.textMid,lineHeight:1.5}},descs[ph]||"")
+            )
+          );
+        })(),
+        // ── IC4: Finish Time Projection ──────────────────────
+        (function(){
+          var pp=function(p){var pts=(p+"").split(":");return parseInt(pts[0],10)*60+(parseInt(pts[1],10)||0);};
+          var st=function(s){var h=Math.floor(s/3600);var m=Math.floor((s%3600)/60);var ss=Math.round(s%60);return h+":"+(m<10?"0"+m:m)+":"+(ss<10?"0"+ss:ss);};
+          var qr=runs.filter(function(r){return isRunActivity(r.type)&&parseFloat(r.dist||0)>=3&&r.pace&&r.hrAvg;});
+          if(qr.length<3)return e("div",{style:cardS({marginBottom:12})},
+            e("div",{style:{fontSize:11,fontWeight:700,color:C.textSoft,letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}},"Finish Time Projection 🔒"),
+            e("div",{style:{textAlign:"center",padding:"16px 0",color:C.textSoft,fontSize:13,lineHeight:1.6}},"Log 3 runs of 3+ miles with pace and heart rate to unlock your projected finish time. ("+qr.length+"/3 logged)")
+          );
+          var r3=qr.slice(0,3);var avgP=r3.reduce(function(a,r){return a+pp(r.pace);},0)/3;
+          var adj=(r3[0].type==="tempo"||r3[0].type==="intervals")?1.0:0.92;
+          var curSec=Math.round(13.1*(avgP*adj));
+          var remWk=Math.max(0,getDTR()/7);var imp=Math.min(0.12,remWk*0.006);
+          var raceSec=Math.round(13.1*(avgP*adj*(1-imp)));
+          var goalSec=6292;var diff=raceSec-goalSec;
+          var badge=diff<-120?"Ahead of Goal":diff<=180?"On Track":"Building Fitness";
+          var bClr=diff<-120?C.good:diff<=180?"#6366f1":C.warn;
+          return e("div",{style:cardS({marginBottom:12})},
+            e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}},
+              e("div",{style:{fontSize:11,fontWeight:700,color:C.textSoft,letterSpacing:1.5,textTransform:"uppercase"}},"Finish Time Projection"),
+              e("div",{style:{fontSize:10,fontWeight:800,padding:"3px 9px",borderRadius:10,background:bClr+"14",border:"1px solid "+bClr+"28",color:bClr}},badge)
+            ),
+            e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}},
+              [{l:"Current Fitness",v:st(curSec),c:C.textMid},{l:"Race Day Est.",v:st(raceSec),c:"#6366f1"},{l:"Goal",v:"1:44:52",c:C.good}].map(function(x,i){
+                return e("div",{key:i,style:{textAlign:"center",background:C.bgDeep,borderRadius:10,padding:"10px 6px"}},
+                  e("div",{style:{fontSize:9,color:C.textSoft,letterSpacing:1,textTransform:"uppercase",marginBottom:4,fontWeight:600}},x.l),
+                  e("div",{style:{fontSize:15,fontWeight:900,color:x.c,lineHeight:1}},x.v)
+                );
+              })
+            ),
+            e("div",{style:{fontSize:11,color:C.textSoft,fontStyle:"italic",lineHeight:1.5}},"Projection accuracy improves as more runs are logged. Based on "+qr.length+" qualifying run"+(qr.length>1?"s":"")+".")
+          );
+        })(),
         A.actions.length>0?e("div",{style:cardS({marginBottom:12})},
           e("div",{style:{fontSize:11,fontWeight:700,color:C.hr,letterSpacing:1.5,textTransform:"uppercase",marginBottom:10}},"Priority Actions"),
           A.actions.map(function(a,i){
@@ -447,7 +560,60 @@ function App(){
           e("div",{style:{fontSize:11,fontWeight:700,color:C.good,letterSpacing:1.5,textTransform:"uppercase",marginBottom:10}},"✓ Positive Signals"),
           A.positives.map(function(item,i){return e(ICard,{key:i,item:item,type:"good"});})
         ):null,
-        A.warnings.length===0&&A.positives.length===0?e("div",{style:cardS({textAlign:"center",padding:36,color:C.textSoft,fontSize:14})},"Log runs, HR, and nutrition to generate insights."):null
+        A.warnings.length===0&&A.positives.length===0?e("div",{style:cardS({textAlign:"center",padding:36,color:C.textSoft,fontSize:14})},"Log runs, HR, and nutrition to generate insights."):null,
+
+        // IC5 — Weekly Comparison Table
+        (function(){
+          var qr=runs.filter(function(r){return isRunActivity(r.type)&&r.week;});
+          var seen={};var allWks=[];
+          qr.forEach(function(r){if(!seen[r.week]){seen[r.week]=1;allWks.push(r.week);}});
+          if(allWks.length<2)return null;
+          var curWk=week;
+          var lastWk=week-1;
+          // miles per week (run only)
+          function wkMiles(w){return qr.filter(function(r){return r.week===w;}).reduce(function(s,r){return s+r.dist;},0);}
+          function wkRuns(w){return qr.filter(function(r){return r.week===w;}).length;}
+          function wkStr(w){return strength.filter(function(s){return s.week===w;}).length;}
+          function wkNut(w){
+            var days={};
+            nutrition.filter(function(n){return n.week===w;}).forEach(function(n){days[n.date]=1;});
+            return Object.keys(days).length;
+          }
+          // best week by mileage
+          var bestWk=allWks.reduce(function(bw,w){return wkMiles(w)>wkMiles(bw)?w:bw;},allWks[0]);
+          var cols=["This Week","Last Week","Best Week"];
+          var wks=[curWk,lastWk,bestWk];
+          var rows=[
+            {label:"Miles",vals:wks.map(function(w){return wkMiles(w).toFixed(1);})},
+            {label:"Runs",vals:wks.map(function(w){return wkRuns(w).toString();})},
+            {label:"Strength",vals:wks.map(function(w){return wkStr(w).toString();})},
+            {label:"Nutrition Days",vals:wks.map(function(w){return wkNut(w).toString();})}
+          ];
+          var hdrStyle={fontSize:11,fontWeight:700,color:C.textSoft,padding:"6px 8px",textAlign:"center",borderBottom:"1px solid "+C.border};
+          var lblStyle={fontSize:12,color:C.textSoft,padding:"7px 8px",borderBottom:"1px solid "+C.border+"55"};
+          var valStyle={fontSize:13,fontWeight:700,color:C.text,padding:"7px 8px",textAlign:"center",borderBottom:"1px solid "+C.border+"55"};
+          var curValStyle=Object.assign({},valStyle,{color:"#6366f1"});
+          // build header row
+          var hdrCells=[e("div",{style:{fontSize:11,color:"transparent",padding:"6px 8px",borderBottom:"1px solid "+C.border}},"-")].concat(
+            cols.map(function(c,i){return e("div",{key:c,style:Object.assign({},hdrStyle,i===0?{color:"#6366f1"}:{})},c);})
+          );
+          // build data rows
+          var dataCells=[];
+          rows.forEach(function(row){
+            dataCells.push(e("div",{key:row.label+"l",style:lblStyle},row.label));
+            row.vals.forEach(function(v,i){
+              dataCells.push(e("div",{key:row.label+i,style:i===0?curValStyle:valStyle},v));
+            });
+          });
+          var gridStyle={style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:0}};
+          return e("div",{style:cardS({marginBottom:12})},
+            e("div",{style:{fontSize:11,fontWeight:700,color:C.textSoft,letterSpacing:1.5,textTransform:"uppercase",marginBottom:10}},"Weekly Comparison"),
+            e("div",{style:{borderRadius:8,overflow:"hidden",border:"1px solid "+C.border}},
+              e.apply(null,["div",{style:{display:"grid",gridTemplateColumns:"1.2fr 1fr 1fr 1fr",gap:0}}].concat(hdrCells)),
+              e.apply(null,["div",{style:{display:"grid",gridTemplateColumns:"1.2fr 1fr 1fr 1fr",gap:0}}].concat(dataCells))
+            )
+          );
+        })()
       ):null,
 
       // ════════════════════════════════════════════
